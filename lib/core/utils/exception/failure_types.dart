@@ -1,0 +1,1 @@
+enum FailureType { localDatabase, network, networkServer, illegalState, interrupt, unknown }

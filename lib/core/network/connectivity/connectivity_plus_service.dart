@@ -7,6 +7,7 @@ import 'connectivity_service.dart';
 
 
 class ConnectivityPlusConnectionService implements ConnectivityService {
+
   final Connectivity _connectivity;
   final InternetConnectionChecker _internetChecker;
   final StreamController<bool> _connectionStatusController;

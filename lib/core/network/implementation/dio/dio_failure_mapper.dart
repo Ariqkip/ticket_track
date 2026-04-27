@@ -1,5 +1,5 @@
 import 'package:dio/dio.dart';
-import 'package:ticket_track/lib/core/utils/exception/failure_types.dart';
+import 'package:ticket_track/core/utils/exception/failure_types.dart';
 
 extension DioFailureTypeExtension on DioExceptionType {
   FailureType get failureType => switch (this) {

@@ -1,7 +1,9 @@
 import 'dart:ui';
+
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../services/notification_provider.dart';
 
 class GlobalNotificationOverlay extends ConsumerWidget {
@@ -83,10 +85,10 @@ class GlobalNotificationOverlay extends ConsumerWidget {
                           .then()
                           .shimmer(duration: 1200.ms),
                       const SizedBox(height: 20),
-                      const Text(
-                        "TICKET VALIDATION",
+                      Text(
+                        config.title,
                         textAlign: TextAlign.center,
-                        style: TextStyle(
+                        style: const TextStyle(
                           color: Colors.green,
                           fontSize: 26,
                           fontWeight: FontWeight.bold,

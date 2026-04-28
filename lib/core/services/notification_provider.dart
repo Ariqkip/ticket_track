@@ -65,7 +65,7 @@ class NotificationNotifier extends StateNotifier<NotificationState?> {
   void _triggerHaptics(ValidationStatus status) {
     switch (status) {
       case ValidationStatus.success:
-        HapticFeedback.lightImpact();
+        HapticFeedback.heavyImpact();
       case ValidationStatus.duplicate:
         HapticFeedback.vibrate();
       case ValidationStatus.invalid:

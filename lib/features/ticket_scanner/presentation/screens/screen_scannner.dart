@@ -1,22 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:fluttertoast/fluttertoast.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
 import '../../../../core/services/notification_provider.dart';
+import '../../../events/domain/entities/events.dart';
 
 class ScannerScreen extends HookConsumerWidget {
-  const ScannerScreen({super.key});
+  final Event event;
+
+  const ScannerScreen({super.key, required this.event});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final cameraController = useMemoized(() => MobileScannerController());
-    final overlaystate=ref.read(notificationProvider.notifier);
+    final overlaystate = ref.read(notificationProvider.notifier);
+    final state = ref.watch(notificationProvider);
     final animationController = useAnimationController(
       duration: const Duration(seconds: 2),
     );
-
+    final String eventName = event.name;
     final isTorchOn = useState(false);
 
     useEffect(() {
@@ -24,7 +27,14 @@ class ScannerScreen extends HookConsumerWidget {
 
       return () => cameraController.dispose();
     }, const []);
-
+    useEffect(() {
+      if (state != null) {
+        cameraController.stop();
+      } else {
+        cameraController.start();
+      }
+      return null;
+    }, [state]);
     final double screenWidth = MediaQuery.of(context).size.width;
     final double screenHeight = MediaQuery.of(context).size.height;
     final double cutOutSize = screenWidth * 0.65;
@@ -47,7 +57,13 @@ class ScannerScreen extends HookConsumerWidget {
             onDetect: (capture) {
               final barcode = capture.barcodes.firstOrNull?.rawValue;
               if (barcode != null && barcode.trim().isNotEmpty) {
-                overlaystate.emit(title: "SUCCESS", message:barcode, status: ValidationStatus.success, holderName: "Eric", ticketType: "Annual Tech Summit 2026");
+                overlaystate.emit(
+                  title: "SUCCESS",
+                  message: barcode,
+                  status: ValidationStatus.success,
+                  holderName: "Eric",
+                  ticketType: "Annual Tech Summit 2026",
+                );
               }
             },
             fit: BoxFit.cover,
@@ -55,9 +71,7 @@ class ScannerScreen extends HookConsumerWidget {
 
           // Custom Overlay with Scanning Line
           CustomPaint(
-            painter: ScannerOverlayPainter(
-              scanLineOffset: animationValue,
-            ),
+            painter: ScannerOverlayPainter(scanLineOffset: animationValue),
             child: Container(),
           ),
 
@@ -68,9 +82,13 @@ class ScannerScreen extends HookConsumerWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
-                    "Annual Tech Summit 2026",
-                    style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                  Text(
+                    eventName,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   IconButton(
                     icon: const Icon(Icons.image_outlined, color: Colors.white),
@@ -95,7 +113,9 @@ class ScannerScreen extends HookConsumerWidget {
                 const SizedBox(height: 30),
                 IconButton(
                   icon: Icon(
-                    isTorchOn.value ? Icons.flashlight_on_outlined : Icons.flashlight_off_outlined,
+                    isTorchOn.value
+                        ? Icons.flashlight_on_outlined
+                        : Icons.flashlight_off_outlined,
                     color: Colors.white,
                     size: 32,
                   ),
@@ -126,9 +146,15 @@ class ScannerScreen extends HookConsumerWidget {
         children: [
           const Icon(Icons.circle, color: Colors.green, size: 12),
           const SizedBox(width: 8),
-          const Text("ONLINE", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+          const Text(
+            "ONLINE",
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          ),
           const SizedBox(width: 16),
-          Text("SCANS: $scanCount", style: const TextStyle(color: Colors.white70)),
+          Text(
+            "SCANS: $scanCount",
+            style: const TextStyle(color: Colors.white70),
+          ),
         ],
       ),
     );
@@ -138,6 +164,7 @@ class ScannerScreen extends HookConsumerWidget {
 // Keep your ScannerOverlayPainter class exactly as it was...
 class ScannerOverlayPainter extends CustomPainter {
   final double scanLineOffset;
+
   ScannerOverlayPainter({required this.scanLineOffset});
 
   @override
@@ -153,7 +180,9 @@ class ScannerOverlayPainter extends CustomPainter {
       Path.combine(
         PathOperation.difference,
         Path()..addRect(Rect.fromLTWH(0, 0, size.width, size.height)),
-        Path()..addRRect(RRect.fromRectAndRadius(cutOutRect, const Radius.circular(8))),
+        Path()..addRRect(
+          RRect.fromRectAndRadius(cutOutRect, const Radius.circular(8)),
+        ),
       ),
       Paint()..color = Colors.black.withOpacity(0.5),
     );
@@ -167,40 +196,71 @@ class ScannerOverlayPainter extends CustomPainter {
 
     final double cornerLength = 20;
 
-    canvas.drawPath(Path()
-      ..moveTo(cutOutRect.left, cutOutRect.top + cornerLength)
-      ..lineTo(cutOutRect.left, cutOutRect.top)
-      ..lineTo(cutOutRect.left + cornerLength, cutOutRect.top), borderPaint);
+    canvas.drawPath(
+      Path()
+        ..moveTo(cutOutRect.left, cutOutRect.top + cornerLength)
+        ..lineTo(cutOutRect.left, cutOutRect.top)
+        ..lineTo(cutOutRect.left + cornerLength, cutOutRect.top),
+      borderPaint,
+    );
 
-    canvas.drawPath(Path()
-      ..moveTo(cutOutRect.right - cornerLength, cutOutRect.top)
-      ..lineTo(cutOutRect.right, cutOutRect.top)
-      ..lineTo(cutOutRect.right, cutOutRect.top + cornerLength), borderPaint);
+    canvas.drawPath(
+      Path()
+        ..moveTo(cutOutRect.right - cornerLength, cutOutRect.top)
+        ..lineTo(cutOutRect.right, cutOutRect.top)
+        ..lineTo(cutOutRect.right, cutOutRect.top + cornerLength),
+      borderPaint,
+    );
 
-    canvas.drawPath(Path()
-      ..moveTo(cutOutRect.left, cutOutRect.bottom - cornerLength)
-      ..lineTo(cutOutRect.left, cutOutRect.bottom)
-      ..lineTo(cutOutRect.left + cornerLength, cutOutRect.bottom), borderPaint);
+    canvas.drawPath(
+      Path()
+        ..moveTo(cutOutRect.left, cutOutRect.bottom - cornerLength)
+        ..lineTo(cutOutRect.left, cutOutRect.bottom)
+        ..lineTo(cutOutRect.left + cornerLength, cutOutRect.bottom),
+      borderPaint,
+    );
 
-    canvas.drawPath(Path()
-      ..moveTo(cutOutRect.right - cornerLength, cutOutRect.bottom)
-      ..lineTo(cutOutRect.right, cutOutRect.bottom)
-      ..lineTo(cutOutRect.right, cutOutRect.bottom - cornerLength), borderPaint);
+    canvas.drawPath(
+      Path()
+        ..moveTo(cutOutRect.right - cornerLength, cutOutRect.bottom)
+        ..lineTo(cutOutRect.right, cutOutRect.bottom)
+        ..lineTo(cutOutRect.right, cutOutRect.bottom - cornerLength),
+      borderPaint,
+    );
 
     final linePaint = Paint()
       ..color = Colors.blue
       ..strokeWidth = 5
-      ..shader = LinearGradient(
-        colors: [Colors.blue.withOpacity(0.1), Colors.blue, Colors.blue.withOpacity(0.1)],
-      ).createShader(Rect.fromLTWH(cutOutRect.left, cutOutRect.top + (cutOutRect.height * scanLineOffset), cutOutRect.width, 2));
+      ..shader =
+          LinearGradient(
+            colors: [
+              Colors.blue.withOpacity(0.1),
+              Colors.blue,
+              Colors.blue.withOpacity(0.1),
+            ],
+          ).createShader(
+            Rect.fromLTWH(
+              cutOutRect.left,
+              cutOutRect.top + (cutOutRect.height * scanLineOffset),
+              cutOutRect.width,
+              2,
+            ),
+          );
 
     canvas.drawLine(
-      Offset(cutOutRect.left, cutOutRect.top + (cutOutRect.height * scanLineOffset)),
-      Offset(cutOutRect.right, cutOutRect.top + (cutOutRect.height * scanLineOffset)),
+      Offset(
+        cutOutRect.left,
+        cutOutRect.top + (cutOutRect.height * scanLineOffset),
+      ),
+      Offset(
+        cutOutRect.right,
+        cutOutRect.top + (cutOutRect.height * scanLineOffset),
+      ),
       linePaint,
     );
   }
 
   @override
-  bool shouldRepaint(ScannerOverlayPainter oldDelegate) => oldDelegate.scanLineOffset != scanLineOffset;
+  bool shouldRepaint(ScannerOverlayPainter oldDelegate) =>
+      oldDelegate.scanLineOffset != scanLineOffset;
 }

@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
-import 'value_objects.dart';
+
+import '../../../events/domain/entities/value_objects.dart';
 
 class Ticket extends Equatable {
   final TicketCode code;
